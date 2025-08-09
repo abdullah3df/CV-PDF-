@@ -1,0 +1,553 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV Maker — صانع سيرة ذاتية PDF</title>
+  <meta name="description" content="املأ بياناتك وشاهد معاينة فورية وصدّر PDF. خلفية الموقع #dce6f2، شريط جانبي داكن، ولون الشريط قابل للتخصيص.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" id="lib-html2pdf-cdn" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    /* ===== الأساسيات ===== */
+    :root{
+      --site-bg:#dce6f2;   /* خلفية الموقع المطلوبة */
+      --text:#0b1220;      /* نص داكن واضح */
+      --muted:#475569;
+      --accent:#0f172a;    /* لون الشريط (قابل للتغيير) */
+      --accent-2:#1f2937;
+      --sheet-accent:#1f2937;
+
+      --brand:#0f172a;     /* لون ثابت لعناصر الواجهة (الأزرار) - لا يتغير مع لون الشريط */
+      --brand-2:#1f2937;
+
+      --side-w:260px;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;padding:0;
+      font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);background:var(--site-bg);min-height:100vh
+    }
+    /* لمسة خفيفة بالخلفية دون تغيير الأزرار */
+    body{
+      background:
+        radial-gradient(800px 400px at 100% 0%, rgba(0, 64, 128, .05), transparent 60%),
+        radial-gradient(700px 350px at 0% 100%, rgba(0, 64, 128, .04), transparent 60%),
+        var(--site-bg);
+    }
+
+    /* ===== تخطيط عام ===== */
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:16px}
+    .two{grid-template-columns:380px 1fr}
+    @media (max-width:980px){.two{grid-template-columns:1fr}}
+    .panel{background:#ffffffcc;border:1px solid rgba(2,6,23,.08);border-radius:var(--radius);padding:16px}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .logo-badge{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+    .tools{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* الأزرار ثابتة اللون (لا تتأثر بلون الشريط) */
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:800;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+    .btn.ghost{background:#ffffff80;color:#0f172a;border:1px solid rgba(2,6,23,.15);box-shadow:none}
+    .badge{font-size:12px;border:1px solid rgba(2,6,23,.12);padding:6px 10px;border-radius:999px;color:#334155;background:#ffffff66}
+
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(2,6,23,.15);background:#fff;color:#0b1220;outline:none}
+    textarea{min-height:90px;resize:vertical}
+    label{font-weight:700;font-size:13px;margin-bottom:6px;display:block}
+    .row{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    .row3{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
+
+    #builder{position:sticky;top:12px;height:calc(100vh - 24px);overflow:auto}
+    .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .swatch{display:flex;align-items:center;gap:10px;border:1px solid rgba(2,6,23,.12);padding:8px;border-radius:10px;background:#fff;cursor:pointer}
+    .swatch[aria-checked="true"]{outline:2px solid rgba(2,6,23,.25)}
+    .swatch .dot{width:18px;height:18px;border-radius:999px}
+
+    /* ===== ورقة المعاينة ===== */
+    .sheet-wrap{border:1px solid rgba(2,6,23,.08);border-radius:16px;display:grid;place-items:center;padding:24px;perspective:1000px;background:#ffffff80;transition:transform .2s ease}
+    .sheet{width:794px;min-height:1123px;background:#fff;color:#111;padding:26px 28px;position:relative;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.22);overflow:hidden;transform:translateZ(0);transition:transform .1s ease}
+
+    /* الشريط الجانبي الملوّن: يظهر فقط عند إضافة الفئة with-bar */
+    .sheet.with-bar::before{content:"";position:absolute;top:0;bottom:0;right:0;width:var(--side-w);background:var(--accent);z-index:0}
+    [dir='ltr'] .sheet.with-bar::before{left:0;right:auto}
+
+    .tpl-classic h1{font-size:28px;margin:0}
+    .meta{display:flex;gap:16px;flex-wrap:wrap;color:#333}
+    .sec{margin-top:14px}
+    .sec h3{margin:0 0 8px;border-bottom:2px solid var(--sheet-accent);display:inline-block}
+    .item{margin:6px 0}
+    .muted{color:#555}
+    .left-right{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .skills,.langs{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{border:1px solid var(--sheet-accent);border-radius:999px;padding:6px 10px;font-size:12px}
+    .photo{position:absolute;top:28px;left:28px;width:86px;height:86px;border-radius:10px;object-fit:cover;border:2px solid #eee}
+
+    /* قالب الشريط الجانبي */
+    .tpl-sidebar{display:grid;grid-template-columns:1fr var(--side-w);gap:22px;position:relative;z-index:2}
+    .tpl-sidebar .side{grid-column:2;background:#ffffffeb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(17,24,39,.08)}
+    .tpl-sidebar .side .brand{font-weight:800;color:#111;margin-bottom:6px}
+
+    /* 3D tilt */
+    .sheet-wrap.tilt .sheet{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
+
+    @media print{.no-print{display:none!important}.sheet{box-shadow:none}@page{size:A4;margin:10mm}}
+  </style>
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="brand"><div class="logo-badge">📄</div><span>CV Maker</span></div>
+    <div class="tools">
+      <button class="btn" id="btnPDF">تحميل PDF</button>
+      <button class="btn ghost" id="btn3D">معاينة ثلاثية الأبعاد: تشغيل</button>
+      <button class="btn ghost" id="btnView">وضع العرض فقط</button>
+      <button class="btn ghost" id="btnSave">حفظ</button>
+      <button class="btn ghost" id="btnLoad">استرجاع</button>
+      <button class="btn ghost" id="btnReset">حذف الكل</button>
+    </div>
+  </header>
+
+  <main class="container grid two">
+    <section class="panel no-print" id="builder">
+      <h2>املأ بيانات سيرتك</h2>
+      <div class="row">
+        <div><label>الاسم الكامل</label><input id="fullName" placeholder="مثال: عبد الله حكم"></div>
+        <div><label>المسمى الوظيفي</label><input id="jobTitle" placeholder="مثال: مطوّر واجهات أمامية"></div>
+      </div>
+      <div class="row3">
+        <div><label>البريد</label><input id="email" placeholder="you@email.com"></div>
+        <div><label>الهاتف</label><input id="phone" placeholder="+49 .."></div>
+        <div><label>المدينة</label><input id="location" placeholder="Berlin, DE"></div>
+      </div>
+      <div class="row">
+        <div><label>رابط (موقع/LinkedIn)</label><input id="website" placeholder="https://..."></div>
+        <div><label>صورة (اختياري)</label><input id="photo" type="file" accept="image/*"></div>
+      </div>
+
+      <label>الملخص المهني</label>
+      <textarea id="summary" placeholder="3-4 أسطر تلخّص خبرتك وقيمتك."></textarea>
+
+      <div class="row">
+        <div><label>المهارات (افصل بفواصل)</label><input id="skills" placeholder="JavaScript, React, CSS"></div>
+        <div><label>اللغات (افصل بفواصل)</label><input id="languages" placeholder="العربية، الإنجليزية B2"></div>
+      </div>
+
+      <h3>الخبرات</h3>
+      <div id="expList"></div>
+      <button class="btn" id="addExp" type="button">+ إضافة خبرة</button>
+
+      <h3>التعليم</h3>
+      <div id="eduList"></div>
+      <button class="btn" id="addEdu" type="button">+ إضافة مؤهل</button>
+
+      <h3>القالب</h3>
+      <div class="tools">
+        <label class="badge"><input type="radio" name="tpl" value="classic"> كلاسيكي</label>
+        <label class="badge"><input type="radio" name="tpl" value="sidebar" checked> شريط جانبي احترافي</label>
+      </div>
+
+      <h3>لون الشريط</h3>
+      <div class="swatches" id="swatches">
+        <button class="swatch" type="button" data-theme='{"accent":"#0f172a","accent2":"#1f2937","sheetAccent":"#1f2937"}' aria-checked="true"><span class="dot" style="background:#0f172a"></span>Navy Dark</button>
+        <button class="swatch" type="button" data-theme='{"accent":"#111827","accent2":"#1f2937","sheetAccent":"#1f2937"}'><span class="dot" style="background:#111827"></span>Graphite</button>
+        <button class="swatch" type="button" data-theme='{"accent":"#064e3b","accent2":"#065f46","sheetAccent":"#07352a"}'><span class="dot" style="background:#064e3b"></span>Emerald Dark</button>
+        <button class="swatch" type="button" data-theme='{"accent":"#7f1d1d","accent2":"#991b1b","sheetAccent":"#7f1d1d"}'><span class="dot" style="background:#7f1d1d"></span>Burgundy Dark</button>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div><label>لون مخصص</label><input id="colorPicker" type="color" value="#0f172a"></div>
+        <div><label>Hex</label><input id="colorHex" value="#0f172a"></div>
+      </div>
+      <div class="tools">
+        <button class="btn" id="btnApplyColor" type="button">تطبيق اللون</button>
+        <button class="btn ghost" id="btnResetColor" type="button">إعادة الافتراضي</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="sheet-wrap" id="sheetWrap">
+        <div class="sheet tpl-classic" id="sheet"></div>
+      </div>
+      <div class="badge" style="margin-top:8px" id="hint">اكتب في الحقول على اليسار لمشاهدة المعاينة الفورية هنا</div>
+    </section>
+  </main>
+
+  <div class="container no-print" id="testStatus" style="font-size:12px;color:#334155;margin-top:8px"></div>
+
+  <script>
+    // ===== Helpers
+    const $=(s)=>document.querySelector(s);
+    const $$=(s)=>Array.prototype.slice.call(document.querySelectorAll(s));
+    const on=(el,ev,fn)=>{if(el) el.addEventListener(ev,fn)};
+
+    const state={exp:[],edu:[],skills:[],languages:[],photoData:null,tpl:'sidebar'};
+    let theme={accent:'#0f172a',accent2:'#1f2937',sheetAccent:'#1f2937'};
+
+    const STORAGE_KEY='cv_maker_state_v1';
+
+    // ===== Templates
+    function buildClassic(){
+      return '<img id="p_photo" class="photo" alt="" style="display:'+(state.photoData?'block':'none')+'" '+(state.photoData?('src="'+state.photoData+'"'):'')+'/>\n'
+      +'<h1 id="p_name">الاسم الكامل</h1>'
+      +'<div class="meta" id="p_meta"></div>'
+      +'<div class="sec"><h3>الملخص</h3><p id="p_summary" class="muted"></p></div>'
+      +'<div class="sec"><h3>الخبرات</h3><div id="p_exp"></div></div>'
+      +'<div class="left-right sec"><div><h3>التعليم</h3><div id="p_edu"></div></div>'
+      +'<div><h3>المهارات</h3><div class="skills" id="p_skills"></div><h3 style="margin-top:12px">اللغات</h3><div class="langs" id="p_langs"></div></div></div>';
+    }
+    function buildSidebar(){
+      return '<div class="tpl-sidebar">'
+      +'<div class="side"><div class="brand">التفاصيل</div>'
+      +'<img id="p_photo" style="width:100%;height:auto;border-radius:10px;border:1px solid #e5e7eb;display:'+(state.photoData?'block':'none')+'" '+(state.photoData?('src="'+state.photoData+'"'):'')+' alt=""/>'
+      +'<h3>المهارات</h3><div class="skills" id="p_skills"></div>'
+      +'<h3>اللغات</h3><div class="langs" id="p_langs"></div>'
+      +'<h3>التواصل</h3><div class="muted" id="p_contact"></div></div>'
+      +'<div><h1 id="p_name"></h1><div class="meta" id="p_meta"></div>'
+      +'<div class="sec"><h3>الملخص</h3><p id="p_summary" class="muted"></p></div>'
+      +'<div class="sec"><h3>الخبرات</h3><div id="p_exp"></div></div>'
+      +'<div class="sec"><h3>التعليم</h3><div id="p_edu"></div></div></div></div>';
+    }
+
+    // ===== Fill
+    function fillTemplate(){
+      const p=(id)=>document.getElementById(id);
+      if(p('p_name')) p('p_name').textContent=state.fullName||'الاسم الكامل';
+
+      const meta=[];
+      if(state.jobTitle) meta.push(state.jobTitle);
+      if(state.email) meta.push(state.email);
+      if(state.phone) meta.push(state.phone);
+      if(state.location) meta.push(state.location);
+      if(state.website) meta.push(state.website);
+      if(p('p_meta')) p('p_meta').textContent=meta.join(' • ');
+
+      if(p('p_summary')) p('p_summary').textContent=state.summary||'';
+
+      const expWrap=p('p_exp');
+      if(expWrap){
+        expWrap.innerHTML='';
+        (state.exp||[]).forEach(x=>{
+          const d=document.createElement('div');
+          d.className='item';
+          d.innerHTML='<strong>'+(x.role||'')+'</strong> — '+(x.company||'')+' <span class="muted">'+(x.dates||'')+'</span><br>'+ (x.desc||'');
+          expWrap.appendChild(d);
+        });
+      }
+
+      const eduWrap=p('p_edu');
+      if(eduWrap){
+        eduWrap.innerHTML='';
+        (state.edu||[]).forEach(x=>{
+          const d=document.createElement('div');
+          d.className='item';
+          d.innerHTML='<strong>'+(x.degree||'')+'</strong> — '+(x.school||'')+' <span class="muted">'+(x.year||'')+'</span>'+(x.extra? '<br>'+x.extra:'');
+          eduWrap.appendChild(d);
+        });
+      }
+
+      const sWrap=p('p_skills');
+      if(sWrap){
+        sWrap.innerHTML='';
+        (state.skills||[]).forEach(s=>{
+          const sp=document.createElement('span');
+          sp.className='chip';
+          sp.textContent=s;
+          sWrap.appendChild(sp);
+        });
+      }
+
+      const lWrap=p('p_langs');
+      if(lWrap){
+        lWrap.innerHTML='';
+        (state.languages||[]).forEach(s=>{
+          const sp=document.createElement('span');
+          sp.className='chip';
+          sp.textContent=s;
+          lWrap.appendChild(sp);
+        });
+      }
+
+      const contact=p('p_contact');
+      if(contact){
+        contact.innerHTML=[state.email,state.phone,state.location,state.website].filter(Boolean).join('<br>');
+      }
+    }
+
+    // ===== Render
+    function render(){
+      const sheet=$('#sheet'); if(!sheet) return;
+      sheet.className='sheet '+(state.tpl==='sidebar'?'tpl-sidebar with-bar':'tpl-classic');
+      sheet.innerHTML=(state.tpl==='sidebar'?buildSidebar():buildClassic());
+
+      document.documentElement.style.setProperty('--accent', theme.accent);
+      document.documentElement.style.setProperty('--accent-2', theme.accent2||theme.accent);
+      document.documentElement.style.setProperty('--sheet-accent', theme.sheetAccent||'#1f2937');
+      fillTemplate();
+    }
+
+    // ===== Theme + لون مخصص (للشريط فقط)
+    function applyTheme(t){ theme=t||theme; render(); }
+
+    $$('#swatches .swatch').forEach(btn=>{
+      on(btn,'click',()=>{
+        $$('#swatches .swatch').forEach(b=>b.setAttribute('aria-checked','false'));
+        btn.setAttribute('aria-checked','true');
+        try{ applyTheme(JSON.parse(btn.getAttribute('data-theme'))); }catch(e){}
+        // مزامنة أداة الاختيار
+        try{
+          const th=JSON.parse(btn.getAttribute('data-theme'));
+          $('#colorPicker').value=th.accent;
+          $('#colorHex').value=th.accent;
+        }catch(_){}
+      });
+    });
+
+    function sanitizeHex(h){
+      if(!h) return null;
+      h=h.trim(); if(h[0]!=='#') h='#'+h;
+      if(/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(h)) return h;
+      return null;
+    }
+    function setSolidColor(hex){
+      const h=sanitizeHex(hex); if(!h) return false;
+      theme={accent:h,accent2:h,sheetAccent:getComputedStyle(document.documentElement).getPropertyValue('--sheet-accent').trim()||'#1f2937'};
+      render(); return true;
+    }
+    on($('#colorPicker'),'input',(e)=>{ const v=e.target.value; $('#colorHex').value=v; setSolidColor(v); });
+    on($('#colorHex'),'input',(e)=>{ const v=e.target.value; const ok=sanitizeHex(v); if(ok){ $('#colorPicker').value=ok; setSolidColor(ok); } });
+    on($('#btnApplyColor'),'click',()=>{ const ok=setSolidColor($('#colorHex').value); if(!ok) alert('رجاءً أدخل قيمة HEX صحيحة مثل #0f172a'); });
+    on($('#btnResetColor'),'click',()=>{ const first=$$('#swatches .swatch')[0]; if(first){ first.click(); } });
+
+    // ===== مزامنة المُدخلات
+    function sync(){
+      const gv=id=>{ const el=$(id); return el && el.value? el.value.trim():'' };
+
+      state.fullName=gv('#fullName');
+      state.jobTitle=gv('#jobTitle');
+      state.email=gv('#email');
+      state.phone=gv('#phone');
+      state.location=gv('#location');
+      state.website=gv('#website');
+      state.summary=gv('#summary');
+
+      state.skills=(gv('#skills').split(/,|،/).map(s=>s.trim()).filter(Boolean));
+      state.languages=(gv('#languages').split(/,|،/).map(s=>s.trim()).filter(Boolean));
+
+      const exps=$('#expList');
+      state.exp=[];
+      if(exps){
+        Array.from(exps.children).forEach(el=>{
+          const role=(el.querySelector('.i-role')||{}).value||'';
+          const company=(el.querySelector('.i-company')||{}).value||'';
+          const dates=(el.querySelector('.i-dates')||{}).value||'';
+          const desc=(el.querySelector('.i-desc')||{}).value||'';
+          if(role||company||dates||desc) state.exp.push({role,company,dates,desc});
+        });
+      }
+
+      const edus=$('#eduList');
+      state.edu=[];
+      if(edus){
+        Array.from(edus.children).forEach(el=>{
+          const degree=(el.querySelector('.e-degree')||{}).value||'';
+          const school=(el.querySelector('.e-school')||{}).value||'';
+          const year=(el.querySelector('.e-year')||{}).value||'';
+          const extra=(el.querySelector('.e-extra')||{}).value||'';
+          if(degree||school||year||extra) state.edu.push({degree,school,year,extra});
+        });
+      }
+      render();
+    }
+    ['#fullName','#jobTitle','#email','#phone','#location','#website','#summary','#skills','#languages'].forEach(sel=> on($(sel),'input',sync));
+
+    function expItem(item){
+      item=item||{};
+      const w=document.createElement('div'); w.className='panel'; w.style.padding='12px';
+      w.innerHTML='<div class="row"><div><label>المسمى</label><input class="i-role" placeholder="مثال: مطوّر Frontend" value="'+(item.role||'')+'"></div><div><label>الشركة</label><input class="i-company" placeholder="مثال: شركة X" value="'+(item.company||'')+'"></div></div><div class="row"><div><label>المدة</label><input class="i-dates" placeholder="2022 - الآن" value="'+(item.dates||'')+'"></div><div><label>وصف مختصر</label><input class="i-desc" placeholder="إنجازات/مسؤوليات" value="'+(item.desc||'')+'"></div></div><div class="tools"><button class="btn ghost del" type="button">حذف</button></div>';
+      w.querySelector('.del').addEventListener('click',()=>{w.remove(); sync();});
+      w.querySelectorAll('input').forEach(i=>i.addEventListener('input',sync));
+      return w;
+    }
+    function eduItem(item){
+      item=item||{};
+      const w=document.createElement('div'); w.className='panel'; w.style.padding='12px';
+      w.innerHTML='<div class="row"><div><label>الدرجة</label><input class="e-degree" placeholder="بكالوريوس حاسوب" value="'+(item.degree||'')+'"></div><div><label>الجهة التعليمية</label><input class="e-school" placeholder="جامعة ..." value="'+(item.school||'')+'"></div></div><div class="row"><div><label>السنة</label><input class="e-year" placeholder="2021" value="'+(item.year||'')+'"></div><div><label>تفاصيل (اختياري)</label><input class="e-extra" placeholder="مشروع تخرج/معدل" value="'+(item.extra||'')+'"></div></div><div class="tools"><button class="btn ghost del" type="button">حذف</button></div>';
+      w.querySelector('.del').addEventListener('click',()=>{w.remove(); sync();});
+      w.querySelectorAll('input').forEach(i=>i.addEventListener('input',sync));
+      return w;
+    }
+
+    on($('#addExp'),'click',()=>{ $('#expList').appendChild(expItem()); sync(); });
+    on($('#addEdu'),'click',()=>{ $('#eduList').appendChild(eduItem()); sync(); });
+
+    // photo
+    on($('#photo'),'change',(e)=>{
+      const f=e?.target?.files?.[0]; if(!f) return;
+      const reader=new FileReader();
+      reader.onload=()=>{ state.photoData=reader.result; render(); };
+      reader.readAsDataURL(f);
+    });
+
+    // template switch
+    $$('input[name="tpl"]').forEach(r=> on(r,'change',()=>{ state.tpl=r.value; render(); }));
+
+    // 3D tilt
+    let tiltOn=false; const wrap=$('#sheetWrap');
+    function move(ev){
+      if(!tiltOn) return;
+      const rect=wrap.getBoundingClientRect();
+      const x=(ev.clientX-rect.left)/rect.width;
+      const y=(ev.clientY-rect.top)/rect.height;
+      const ry=(x-.5)*8;
+      const rx=(.5-y)*8;
+      wrap.style.setProperty('--rx',rx+'deg');
+      wrap.style.setProperty('--ry',ry+'deg');
+      wrap.classList.add('tilt');
+    }
+    on(wrap,'mousemove',move);
+    on(wrap,'mouseleave',()=>{wrap.style.setProperty('--rx','0deg');wrap.style.setProperty('--ry','0deg');});
+    on($('#btn3D'),'click',()=>{
+      tiltOn=!tiltOn;
+      $('#btn3D').textContent='معاينة ثلاثية الأبعاد: '+(tiltOn?'مفعّلة':'تشغيل');
+      if(!tiltOn){wrap.classList.remove('tilt');}
+    });
+
+    // View-only
+    let viewOnly=false;
+    on($('#btnView'),'click',()=>{
+      viewOnly=!viewOnly;
+      $('#builder').style.display=viewOnly?'none':'';
+      $('#btnView').textContent=viewOnly?'وضع التحرير':'وضع العرض فقط';
+    });
+
+    // PDF آمن
+    function loadScript(src,id){
+      return new Promise(function(res,rej){
+        var el=document.getElementById(id);
+        if(!el){ el=document.createElement('script'); el.src=src; el.id=id; el.crossOrigin='anonymous'; el.referrerPolicy='no-referrer'; el.async=true; document.head.appendChild(el); }
+        el.addEventListener('load',()=>res());
+        el.addEventListener('error',()=>rej(new Error('script load error')));
+      });
+    }
+    async function ensureHtml2pdf(){
+      if(typeof window.html2pdf==='function') return window.html2pdf;
+      try{ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js','lib-html2pdf-dynamic'); }catch(e){}
+      return window.html2pdf;
+    }
+    on($('#btnPDF'),'click', async ()=>{
+      const opt={
+        margin:[10,10,10,10],
+        filename:(state.fullName? state.fullName.replace(/\s+/g,'_'):'CV')+'.pdf',
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{scale:2,useCORS:true,letterRendering:true},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+      };
+      try{
+        const lib=await ensureHtml2pdf();
+        if(typeof lib==='function'){ lib().from($('#sheet')).set(opt).save(); }
+        else { alert('تعذّر تحميل مكتبة PDF — سيتم فتح الطباعة كبديل.'); window.print(); }
+      }catch(err){
+        alert('مشكلة أثناء توليد PDF — سنستخدم الطباعة كبديل.');
+        window.print();
+      }
+    });
+
+    // ==== حفظ / استرجاع / حذف
+    function saveAll(){
+      const snapshot={state,theme};
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot)); alert('تم الحفظ.'); }catch(e){ alert('تعذّر الحفظ في المتصفح.'); }
+    }
+    function loadAll(){
+      try{
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(!raw){ alert('لا يوجد بيانات محفوظة.'); return; }
+        const snap=JSON.parse(raw);
+        Object.assign(state, snap.state||{});
+        theme=Object.assign({}, theme, snap.theme||{});
+
+        // تعبئة الحقول من state
+        const set=(id,val)=>{ const el=$(id); if(el) el.value=val||''; };
+        set('#fullName', state.fullName);
+        set('#jobTitle', state.jobTitle);
+        set('#email', state.email);
+        set('#phone', state.phone);
+        set('#location', state.location);
+        set('#website', state.website);
+        set('#summary', state.summary);
+        set('#skills', (state.skills||[]).join(', '));
+        set('#languages', (state.languages||[]).join(', '));
+
+        // إعادة بناء القوائم
+        $('#expList').innerHTML='';
+        (state.exp||[]).forEach(x=>$('#expList').appendChild(expItem(x)));
+
+        $('#eduList').innerHTML='';
+        (state.edu||[]).forEach(x=>$('#eduList').appendChild(eduItem(x)));
+
+        // القالب
+        $$('input[name="tpl"]').forEach(r=>{ r.checked=(r.value===state.tpl); });
+
+        // اللون
+        $('#colorPicker').value=theme.accent||'#0f172a';
+        $('#colorHex').value=theme.accent||'#0f172a';
+
+        render();
+        alert('تم الاسترجاع.');
+      }catch(e){ alert('تعذّر الاسترجاع.'); }
+    }
+    function resetAll(){
+      if(!confirm('سيتم حذف جميع البيانات. هل أنت متأكد؟')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      // إعادة تعيين الحقول
+      ['#fullName','#jobTitle','#email','#phone','#location','#website','#summary','#skills','#languages'].forEach(sel=>{ const el=$(sel); if(el) el.value=''; });
+      $('#expList').innerHTML=''; $('#eduList').innerHTML='';
+      $('#addExp').click(); $('#addEdu').click();
+
+      state.exp=[]; state.edu=[]; state.skills=[]; state.languages=[];
+      state.photoData=null; state.tpl='sidebar';
+      theme={accent:'#0f172a',accent2:'#1f2937',sheetAccent:'#1f2937'};
+
+      $$('input[name="tpl"]').forEach(r=>{ r.checked=(r.value==='sidebar'); });
+      $('#colorPicker').value=theme.accent; $('#colorHex').value=theme.accent;
+
+      render();
+    }
+    on($('#btnSave'),'click',saveAll);
+    on($('#btnLoad'),'click',loadAll);
+    on($('#btnReset'),'click',resetAll);
+
+    // ==== init
+    (function init(){
+      $('#expList').appendChild(expItem());
+      $('#eduList').appendChild(eduItem());
+      render();
+    })();
+
+    // ==== Tests (أصلحت خطأ كان يوقف التنفيذ)
+    (function runTests(){
+      const out=[];
+      try{
+        out.push($$('input[name="tpl"]').length>0?'✔ tpl موجود':'✖ tpl مفقود');
+        out.push(Array.isArray($$('input[name="tpl"]'))?'✔ $$ Array':'✖ $$');
+        const b=state.exp.length;
+        $('#addExp').click();
+        out.push(state.exp.length>=b?'✔ exp ok (يُعاد ملؤه مع sync)':'✖ exp');
+        state.fullName='اختبار'; render();
+        const nm=document.getElementById('p_name');
+        out.push(nm && nm.textContent.indexOf('اختبار')!==-1?'✔ name ok':'✖ name');
+        const before=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+        const sw=document.querySelector('#swatches .swatch:nth-child(2)'); if(sw){ sw.click(); }
+        const after=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+        out.push(before!==after?'✔ theme ok':'✖ theme');
+      }catch(e){
+        out.push('✖ test err: '+e.message);
+      }
+      const box=$('#testStatus'); if(box) box.textContent='Tests: '+out.join(' • ');
+      state.fullName=''; state.photoData=null; render();
+    })();
+  </script>
+</body>
+</html>
