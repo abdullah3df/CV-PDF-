@@ -9,28 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" id="lib-html2pdf-cdn" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
-    /* ===== الأساسيات ===== */
     :root{
-      --site-bg:#dce6f2;   /* خلفية الموقع المطلوبة */
-      --text:#0b1220;      /* نص داكن واضح */
+      --site-bg:#dce6f2;   /* لا نغيّره */
+      --text:#0b1220;
       --muted:#475569;
-      --accent:#0f172a;    /* لون الشريط (قابل للتغيير) */
+      --accent:#0f172a;    /* لون الشريط (يتغير) */
       --accent-2:#1f2937;
       --sheet-accent:#1f2937;
-
-      --brand:#0f172a;     /* لون ثابت لعناصر الواجهة (الأزرار) - لا يتغير مع لون الشريط */
+      --brand:#0f172a;     /* لون أزرار الواجهة */
       --brand-2:#1f2937;
-
       --side-w:260px;
       --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{
-      margin:0;padding:0;
-      font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:var(--text);background:var(--site-bg);min-height:100vh
-    }
-    /* لمسة خفيفة بالخلفية دون تغيير الأزرار */
+    html,body{margin:0;padding:0;font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);background:var(--site-bg);min-height:100vh}
+    /* خلفية الموقع كما هي مع التوهجات الخفيفة */
     body{
       background:
         radial-gradient(800px 400px at 100% 0%, rgba(0, 64, 128, .05), transparent 60%),
@@ -38,19 +31,17 @@
         var(--site-bg);
     }
 
-    /* ===== تخطيط عام ===== */
     .container{max-width:1200px;margin:0 auto;padding:16px}
     .grid{display:grid;gap:16px}
     .two{grid-template-columns:380px 1fr}
     @media (max-width:980px){.two{grid-template-columns:1fr}}
-    .panel{background:#ffffffcc;border:1px solid rgba(2,6,23,.08);border-radius:var(--radius);padding:16px}
+    .panel{background:#fff;border:1px solid rgba(2,6,23,.08);border-radius:var(--radius);padding:16px}
 
     .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800}
     .logo-badge{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;box-shadow:0 6px 14px rgba(0,0,0,.18)}
     .tools{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* الأزرار ثابتة اللون (لا تتأثر بلون الشريط) */
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:800;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
     .btn.ghost{background:#ffffff80;color:#0f172a;border:1px solid rgba(2,6,23,.15);box-shadow:none}
     .badge{font-size:12px;border:1px solid rgba(2,6,23,.12);padding:6px 10px;border-radius:999px;color:#334155;background:#ffffff66}
@@ -67,31 +58,31 @@
     .swatch[aria-checked="true"]{outline:2px solid rgba(2,6,23,.25)}
     .swatch .dot{width:18px;height:18px;border-radius:999px}
 
-    /* ===== ورقة المعاينة ===== */
     .sheet-wrap{border:1px solid rgba(2,6,23,.08);border-radius:16px;display:grid;place-items:center;padding:24px;perspective:1000px;background:#ffffff80;transition:transform .2s ease}
     .sheet{width:794px;min-height:1123px;background:#fff;color:#111;padding:26px 28px;position:relative;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.22);overflow:hidden;transform:translateZ(0);transition:transform .1s ease}
 
-    /* الشريط الجانبي الملوّن: يظهر فقط عند إضافة الفئة with-bar */
-    .sheet.with-bar::before{content:"";position:absolute;top:0;bottom:0;right:0;width:var(--side-w);background:var(--accent);z-index:0}
-    [dir='ltr'] .sheet.with-bar::before{left:0;right:auto}
+    /* عنصر الشريط الجانبي الحقيقي (بديل ::before) */
+    .sheet .bar{
+      position:absolute; top:0; right:0; bottom:0; width:var(--side-w);
+      background:var(--accent); border-radius:12px 0 0 12px; z-index:0;
+    }
+    [dir='ltr'] .sheet .bar{left:0; right:auto; border-radius:0 12px 12px 0;}
 
     .tpl-classic h1{font-size:28px;margin:0}
-    .meta{display:flex;gap:16px;flex-wrap:wrap;color:#333}
-    .sec{margin-top:14px}
+    .meta{display:flex;gap:16px;flex-wrap:wrap;color:#333;position:relative;z-index:1}
+    .sec{margin-top:14px;position:relative;z-index:1}
     .sec h3{margin:0 0 8px;border-bottom:2px solid var(--sheet-accent);display:inline-block}
     .item{margin:6px 0}
     .muted{color:#555}
     .left-right{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .skills,.langs{display:flex;gap:8px;flex-wrap:wrap}
     .chip{border:1px solid var(--sheet-accent);border-radius:999px;padding:6px 10px;font-size:12px}
-    .photo{position:absolute;top:28px;left:28px;width:86px;height:86px;border-radius:10px;object-fit:cover;border:2px solid #eee}
+    .photo{position:absolute;top:28px;left:28px;width:86px;height:86px;border-radius:10px;object-fit:cover;border:2px solid #eee;z-index:1}
 
-    /* قالب الشريط الجانبي */
     .tpl-sidebar{display:grid;grid-template-columns:1fr var(--side-w);gap:22px;position:relative;z-index:2}
     .tpl-sidebar .side{grid-column:2;background:#ffffffeb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(17,24,39,.08)}
     .tpl-sidebar .side .brand{font-weight:800;color:#111;margin-bottom:6px}
 
-    /* 3D tilt */
     .sheet-wrap.tilt .sheet{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
 
     @media print{.no-print{display:none!important}.sheet{box-shadow:none}@page{size:A4;margin:10mm}}
@@ -185,7 +176,6 @@
 
     const state={exp:[],edu:[],skills:[],languages:[],photoData:null,tpl:'sidebar'};
     let theme={accent:'#0f172a',accent2:'#1f2937',sheetAccent:'#1f2937'};
-
     const STORAGE_KEY='cv_maker_state_v1';
 
     // ===== Templates
@@ -199,7 +189,8 @@
       +'<div><h3>المهارات</h3><div class="skills" id="p_skills"></div><h3 style="margin-top:12px">اللغات</h3><div class="langs" id="p_langs"></div></div></div>';
     }
     function buildSidebar(){
-      return '<div class="tpl-sidebar">'
+      return '<div class="bar" aria-hidden="true"></div>' /* الشريط الحقيقي */
+      +'<div class="tpl-sidebar">'
       +'<div class="side"><div class="brand">التفاصيل</div>'
       +'<img id="p_photo" style="width:100%;height:auto;border-radius:10px;border:1px solid #e5e7eb;display:'+(state.photoData?'block':'none')+'" '+(state.photoData?('src="'+state.photoData+'"'):'')+' alt=""/>'
       +'<h3>المهارات</h3><div class="skills" id="p_skills"></div>'
@@ -279,7 +270,7 @@
     // ===== Render
     function render(){
       const sheet=$('#sheet'); if(!sheet) return;
-      sheet.className='sheet '+(state.tpl==='sidebar'?'tpl-sidebar with-bar':'tpl-classic');
+      sheet.className='sheet '+(state.tpl==='sidebar'?'tpl-sidebar':'tpl-classic');
       sheet.innerHTML=(state.tpl==='sidebar'?buildSidebar():buildClassic());
 
       document.documentElement.style.setProperty('--accent', theme.accent);
@@ -288,20 +279,19 @@
       fillTemplate();
     }
 
-    // ===== Theme + لون مخصص (للشريط فقط)
+    // ===== Theme + لون مخصص للشريط
     function applyTheme(t){ theme=t||theme; render(); }
 
     $$('#swatches .swatch').forEach(btn=>{
       on(btn,'click',()=>{
         $$('#swatches .swatch').forEach(b=>b.setAttribute('aria-checked','false'));
         btn.setAttribute('aria-checked','true');
-        try{ applyTheme(JSON.parse(btn.getAttribute('data-theme'))); }catch(e){}
-        // مزامنة أداة الاختيار
         try{
           const th=JSON.parse(btn.getAttribute('data-theme'));
+          applyTheme(th);
           $('#colorPicker').value=th.accent;
           $('#colorHex').value=th.accent;
-        }catch(_){}
+        }catch(e){}
       });
     });
 
@@ -401,35 +391,24 @@
       const rect=wrap.getBoundingClientRect();
       const x=(ev.clientX-rect.left)/rect.width;
       const y=(ev.clientY-rect.top)/rect.height;
-      const ry=(x-.5)*8;
-      const rx=(.5-y)*8;
-      wrap.style.setProperty('--rx',rx+'deg');
-      wrap.style.setProperty('--ry',ry+'deg');
+      const ry=(x-.5)*8; const rx=(.5-y)*8;
+      wrap.style.setProperty('--rx',rx+'deg'); wrap.style.setProperty('--ry',ry+'deg');
       wrap.classList.add('tilt');
     }
     on(wrap,'mousemove',move);
     on(wrap,'mouseleave',()=>{wrap.style.setProperty('--rx','0deg');wrap.style.setProperty('--ry','0deg');});
-    on($('#btn3D'),'click',()=>{
-      tiltOn=!tiltOn;
-      $('#btn3D').textContent='معاينة ثلاثية الأبعاد: '+(tiltOn?'مفعّلة':'تشغيل');
-      if(!tiltOn){wrap.classList.remove('tilt');}
-    });
+    on($('#btn3D'),'click',()=>{ tiltOn=!tiltOn; $('#btn3D').textContent='معاينة ثلاثية الأبعاد: '+(tiltOn?'مفعّلة':'تشغيل'); if(!tiltOn){wrap.classList.remove('tilt');} });
 
     // View-only
     let viewOnly=false;
-    on($('#btnView'),'click',()=>{
-      viewOnly=!viewOnly;
-      $('#builder').style.display=viewOnly?'none':'';
-      $('#btnView').textContent=viewOnly?'وضع التحرير':'وضع العرض فقط';
-    });
+    on($('#btnView'),'click',()=>{ viewOnly=!viewOnly; $('#builder').style.display=viewOnly?'none':''; $('#btnView').textContent=viewOnly?'وضع التحرير':'وضع العرض فقط'; });
 
-    // PDF آمن
+    // PDF
     function loadScript(src,id){
       return new Promise(function(res,rej){
         var el=document.getElementById(id);
         if(!el){ el=document.createElement('script'); el.src=src; el.id=id; el.crossOrigin='anonymous'; el.referrerPolicy='no-referrer'; el.async=true; document.head.appendChild(el); }
-        el.addEventListener('load',()=>res());
-        el.addEventListener('error',()=>rej(new Error('script load error')));
+        el.addEventListener('load',()=>res()); el.addEventListener('error',()=>rej(new Error('script load error')));
       });
     }
     async function ensureHtml2pdf(){
@@ -442,7 +421,7 @@
         margin:[10,10,10,10],
         filename:(state.fullName? state.fullName.replace(/\s+/g,'_'):'CV')+'.pdf',
         image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:2,useCORS:true,letterRendering:true},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',letterRendering:true},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
       };
       try{
@@ -455,7 +434,7 @@
       }
     });
 
-    // ==== حفظ / استرجاع / حذف
+    // حفظ/استرجاع/حذف
     function saveAll(){
       const snapshot={state,theme};
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot)); alert('تم الحفظ.'); }catch(e){ alert('تعذّر الحفظ في المتصفح.'); }
@@ -468,7 +447,6 @@
         Object.assign(state, snap.state||{});
         theme=Object.assign({}, theme, snap.theme||{});
 
-        // تعبئة الحقول من state
         const set=(id,val)=>{ const el=$(id); if(el) el.value=val||''; };
         set('#fullName', state.fullName);
         set('#jobTitle', state.jobTitle);
@@ -480,17 +458,13 @@
         set('#skills', (state.skills||[]).join(', '));
         set('#languages', (state.languages||[]).join(', '));
 
-        // إعادة بناء القوائم
         $('#expList').innerHTML='';
         (state.exp||[]).forEach(x=>$('#expList').appendChild(expItem(x)));
-
         $('#eduList').innerHTML='';
         (state.edu||[]).forEach(x=>$('#eduList').appendChild(eduItem(x)));
 
-        // القالب
         $$('input[name="tpl"]').forEach(r=>{ r.checked=(r.value===state.tpl); });
 
-        // اللون
         $('#colorPicker').value=theme.accent||'#0f172a';
         $('#colorHex').value=theme.accent||'#0f172a';
 
@@ -501,7 +475,6 @@
     function resetAll(){
       if(!confirm('سيتم حذف جميع البيانات. هل أنت متأكد؟')) return;
       localStorage.removeItem(STORAGE_KEY);
-      // إعادة تعيين الحقول
       ['#fullName','#jobTitle','#email','#phone','#location','#website','#summary','#skills','#languages'].forEach(sel=>{ const el=$(sel); if(el) el.value=''; });
       $('#expList').innerHTML=''; $('#eduList').innerHTML='';
       $('#addExp').click(); $('#addEdu').click();
@@ -519,22 +492,17 @@
     on($('#btnLoad'),'click',loadAll);
     on($('#btnReset'),'click',resetAll);
 
-    // ==== init
-    (function init(){
-      $('#expList').appendChild(expItem());
-      $('#eduList').appendChild(eduItem());
-      render();
-    })();
+    // init
+    (function init(){ $('#expList').appendChild(expItem()); $('#eduList').appendChild(eduItem()); render(); })();
 
-    // ==== Tests (أصلحت خطأ كان يوقف التنفيذ)
+    // Tests (مختصرة)
     (function runTests(){
       const out=[];
       try{
         out.push($$('input[name="tpl"]').length>0?'✔ tpl موجود':'✖ tpl مفقود');
         out.push(Array.isArray($$('input[name="tpl"]'))?'✔ $$ Array':'✖ $$');
-        const b=state.exp.length;
-        $('#addExp').click();
-        out.push(state.exp.length>=b?'✔ exp ok (يُعاد ملؤه مع sync)':'✖ exp');
+        const b=state.exp.length; $('#addExp').click();
+        out.push(state.exp.length>=b?'✔ exp ok':'✖ exp');
         state.fullName='اختبار'; render();
         const nm=document.getElementById('p_name');
         out.push(nm && nm.textContent.indexOf('اختبار')!==-1?'✔ name ok':'✖ name');
@@ -542,9 +510,7 @@
         const sw=document.querySelector('#swatches .swatch:nth-child(2)'); if(sw){ sw.click(); }
         const after=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
         out.push(before!==after?'✔ theme ok':'✖ theme');
-      }catch(e){
-        out.push('✖ test err: '+e.message);
-      }
+      }catch(e){ out.push('✖ test err: '+e.message); }
       const box=$('#testStatus'); if(box) box.textContent='Tests: '+out.join(' • ');
       state.fullName=''; state.photoData=null; render();
     })();
